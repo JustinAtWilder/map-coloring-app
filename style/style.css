@@ -9,6 +9,11 @@ body {
     text-align: center;
 }
 
+p {
+    margin: 0;
+    font-size: small;
+}
+
 .container {
     display: flex;
     flex-direction: column;
@@ -22,7 +27,7 @@ body {
     justify-content: center;
     align-items: center;
     gap: 10px; /* Add some space between the elements */
-    margin: 20px 0; /* Add some margin for spacing */
+    margin: 15px 0; /* Add some margin for spacing */
 }
 
 #mapContainer {
