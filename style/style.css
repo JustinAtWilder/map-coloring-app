@@ -3,15 +3,10 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh;
+    min-height: 150vh;
     margin: 0;
     padding: 0;
     text-align: center;
-}
-
-p {
-    margin: 0;
-    font-size: small;
 }
 
 .container {
@@ -27,20 +22,10 @@ p {
     justify-content: center;
     align-items: center;
     gap: 10px; /* Add some space between the elements */
-    margin: 15px 0; /* Add some margin for spacing */
+    margin: 20px 0; /* Add some margin for spacing */
 }
 
-#mapContainer {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-    width: 100%;
-    height: 500px; /* Ensure the map container has a height */
-}
-
-.colorPicker {
+#colorPalette {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -48,12 +33,54 @@ p {
     margin: 20px 0; /* Add some margin for spacing */
 }
 
-#palette {
-    margin: 20px;
+.colorBtn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    cursor: pointer;
 }
 
-svg {
-    width: 80%;
-    height: auto;
-    border: none;
+#mapContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Adjust width as needed */
+    height: 1200px; /* Increase the height */
+    margin: 20px 0; /* Add some margin for spacing */
+}
+
+/* Media queries for common screen sizes */
+@media (max-width: 1200px) {
+    #mapContainer {
+        width: 90%;
+    }
+}
+
+@media (max-width: 992px) {
+    #mapContainer {
+        width: 95%;
+    }
+}
+
+@media (max-width: 768px) {
+    #mapContainer {
+        width: 100%;
+    }
+
+    button {
+        padding: 8px 16px;
+        margin: 4px;
+    }
+}
+
+@media (max-width: 576px) {
+    #mapContainer {
+        width: 100%;
+    }
+
+    button {
+        padding: 6px 12px;
+        margin: 3px;
+    }
 }
