@@ -201,7 +201,7 @@
 
         async function fetchMapData() {
             try {
-                const response = await fetch('./assets/map_layers.svg');
+                const response = await fetch('./assets/map_layers_exp.svg');
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.text();
                 document.getElementById('mapContainer').innerHTML = data;
