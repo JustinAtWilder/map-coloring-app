@@ -38,7 +38,7 @@
 
         <div id="mapContainer"></div>
         <input type="color" id="colorPicker" style="display: none; position: absolute;">
-        <div id="tooltip" class='tooltiptext' style="position: absolute; display: none; padding: 5px;"></div>
+        <div id="tooltip" class='tooltiptext' style="position: absolute; display: none; padding: 2px;"></div>
     </div>
 
     <script>
@@ -57,67 +57,65 @@
             });
         });
 
-        function changeCursorToICO() {
-            fetch('./assets/Designcontest-Outline-Paint.ico')
-                .then(response => response.blob())
-                .then(blob => {
-                    const url = URL.createObjectURL(blob);
-                    document.body.style.cursor = `url(${url}) 16 16, auto`;
-                })
-                .catch(error => console.error('Error loading ICO:', error));
-        }
 
         function addColoringFunctionality() {
             const svg = document.querySelector('#mapContainer svg');
             if (svg) {
                 svgElements = svg.querySelectorAll('polygon, path');
+                const tribalGroups = {};
+                
                 svgElements.forEach(element => {
                     if (element.classList.contains('tribal')) {
                         element.style.fill = 'rgba(153, 153, 153, 0.5)'; // Default fill color for tribal areas
+                        const name = element.getAttribute('data-name');
+                        if (!tribalGroups[name]) {
+                            tribalGroups[name] = [];
+                        }
+                        tribalGroups[name].push(element);
                     } else {
                         element.style.fill = 'transparent';
                     }
                     element.dataset.colored = 'false'; // Add a flag to track the fill state
 
                     element.addEventListener('click', () => {
+                        const name = element.getAttribute('data-name');
                         const isColored = element.dataset.colored === 'true';
                         const newColor = isColored ? 'transparent' : chosenColor;
                         element.dataset.colored = !isColored;
-                        gsap.to(element, { duration: 0.2, fill: newColor });
+
+                        if (element.classList.contains('tribal')) {
+                            tribalGroups[name].forEach(tribalElement => {
+                                gsap.to(tribalElement, { duration: 0.2, fill: newColor });
+                            });
+                        } else {
+                            gsap.to(element, { duration: 0.2, fill: newColor });
+                        }
 
                         // Remove highlight styles on click
                         gsap.to(element, { duration: 0.15, stroke: '#111111', strokeWidth: 0.3 });
 
-                        // Keep the custom cursor after fill change
-                        changeCursorToICO();
+
                     });
 
                     element.addEventListener('mouseover', (event) => {
-                        if (element.dataset.colored === 'false') {
-                            const strokeColor = element.classList.contains('counties') ? '#669966' : '#FF9933';
-                            gsap.to(element, { duration: 0.15, stroke: strokeColor, strokeWidth: 1.3 }); // Highlight color
+                    if (element.dataset.colored === 'false') {
+                        let strokeColor;
+                        if (element.classList.contains('counties')) {
+                            strokeColor = '#669966';
+                        } else if (element.classList.contains('tribal')) {
+                            strokeColor = '#FF9933';
+                        } else {
+                            strokeColor = '#000000'; // Default stroke color
                         }
-                        // Change cursor to custom cursor on mouseover
-                        changeCursorToICO();
-
-                        // Show tooltip with label
-                        const tooltip = document.getElementById('tooltip');
-                        tooltip.style.display = 'block';
-                        tooltip.style.left = `${event.pageX + 5}px`;
-                        tooltip.style.top = `${event.pageY + 5}px`;
-                        tooltip.innerText = element.getAttribute('data-name') || 'Unknown';
-                        tooltip.style.fontSize = '21px';
-                        tooltip.style.color = 'black';
-                        tooltip.style.textShadow = `1px -1px 3.2px white`;
-                    });
+                        gsap.to(element, { duration: 0.15, stroke: strokeColor, strokeWidth: 1.3 }); // Highlight color
+                    }
+                });
 
                     element.addEventListener('mouseout', () => {
                         if (element.dataset.colored === 'false') {
                             gsap.to(element, { duration: 0.15, stroke: '#111111', strokeWidth: 0.3 });
                         }
-                        // Hide tooltip
-                        const tooltip = document.getElementById('tooltip');
-                        tooltip.style.display = 'none';
+
                     });
 
                     element.addEventListener('contextmenu', (event) => {
@@ -161,6 +159,7 @@
                 toggleLayerVisibility('counties', layer === 'counties');
                 toggleLayerVisibility('tribal', layer === 'tribal');
             }
+            updateLabels(layer)
         });
 
         function clearMap() {
@@ -201,15 +200,132 @@
 
         async function fetchMapData() {
             try {
-                const response = await fetch('./assets/map_layers_exp.svg');
+                const response = await fetch('./assets/map_layers_exp2.svg');
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.text();
                 document.getElementById('mapContainer').innerHTML = data;
                 addColoringFunctionality();
+                addLabels();
             } catch (error) {
                 console.error('Error fetching the map:', error);
             }
         }
+
+        function addLabels() {
+        const svg = document.querySelector('#mapContainer svg');
+        if (svg) {
+            const paths = svg.querySelectorAll('path');
+            const countyLabels = {};
+            const tribalLabels = {};
+
+            paths.forEach(path => {
+                const name = path.getAttribute('data-name');
+                if (name) {
+                    const bbox = path.getBBox();
+                    const area = bbox.width * bbox.height;
+                    const isCounty = path.classList.contains('counties');
+                    const labels = isCounty ? countyLabels : tribalLabels;
+
+                    if (!labels[name] || labels[name].area < area) {
+                        labels[name] = { path, bbox, area };
+                    }
+                }
+            });
+
+            const placedLabels = [];
+
+            Object.keys(countyLabels).forEach(name => {
+                const { path, bbox } = countyLabels[name];
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', bbox.x + bbox.width / 2);
+                text.setAttribute('y', bbox.y + bbox.height / 2);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('alignment-baseline', 'middle');
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('fill', 'black');
+                text.textContent = name;
+                text.classList.add('county-label');
+                svg.appendChild(text);
+
+                adjustLabelSize(text, bbox, svg);
+                avoidLabelOverlap(text, placedLabels);
+                placedLabels.push(text);
+            });
+
+            Object.keys(tribalLabels).forEach(name => {
+                const { path, bbox } = tribalLabels[name];
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', bbox.x + bbox.width / 2);
+                text.setAttribute('y', bbox.y + bbox.height / 2);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('alignment-baseline', 'middle');
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('fill', 'black');
+                text.textContent = name;
+                text.classList.add('tribal-label');
+                svg.appendChild(text);
+
+                adjustLabelSize(text, bbox, svg);
+                avoidLabelOverlap(text, placedLabels);
+                placedLabels.push(text);
+            });
+            
+        }
+    }
+
+    function adjustLabelSize(text, bbox, svg) {
+        let fontSize = 4;
+        while (fontSize > 3 && text.getBBox().width > bbox.width) {
+            fontSize -= 1;
+            text.setAttribute('font-size', fontSize);
+        }
+
+    }
+
+    function avoidLabelOverlap(text, placedLabels) {
+        const padding = 1; // Padding around labels
+        const bbox = text.getBBox();
+        const bboxY = bbox.height
+
+        placedLabels.forEach(placedLabel => {
+            const placedBbox = placedLabel.getBBox();
+            if (isOverlapping(bbox, placedBbox, padding)) {
+                // Adjust the position of the label to avoid overlap
+                const currentX = parseFloat(text.getAttribute('x'));
+                const currentY = parseFloat(text.getAttribute('y'));
+                const newY = parseFloat(text.getAttribute('y')) + placedBbox.height + padding;
+                text.setAttribute('y', newY);
+                const newX = parseFloat(text.getAttribute('x'));
+                text.setAttribute('x', newX);
+            }
+        });
+    }
+
+    function isOverlapping(bbox1, bbox2, padding) {
+        return !(
+            bbox1.x + bbox1.width + padding < bbox2.x ||
+            bbox1.x - padding > bbox2.x + bbox2.width ||
+            bbox1.y + bbox1.height + padding < bbox2.y ||
+            bbox1.y - padding > bbox2.y + bbox2.height
+        );
+    }
+
+
+    function updateLabels(layer) {
+        const svg = document.querySelector('#mapContainer svg');
+        if (svg) {
+            const countyLabels = svg.querySelectorAll('.county-label');
+            const tribalLabels = svg.querySelectorAll('.tribal-label');
+
+            countyLabels.forEach(label => {
+                label.style.display = layer === 'counties' || layer === 'all' ? 'block' : 'none';
+            });
+
+            tribalLabels.forEach(label => {
+                label.style.display = layer === 'tribal' || layer === 'all' ? 'block' : 'none';
+            });
+        }
+    }
 
         fetchMapData();
     </script>
