@@ -23,7 +23,8 @@
         </div>
 
         <div id="colorPalette">
-            <button class="colorBtn" style="background-color: transparent; border: 1px solid #000;" data-color="transparent"></button>
+            <button class="colorBtn" style="background-color: transparent; border: 1px solid #000;"
+                data-color="transparent"></button>
             <button class="colorBtn" style="background-color: #2074b0;" data-color="#2074b0"></button>
             <button class="colorBtn" style="background-color: #97c350;" data-color="#97c350"></button>
             <button class="colorBtn" style="background-color: #D62B2A;" data-color="#D62B2A"></button>
@@ -61,8 +62,12 @@
             if (svg) {
                 svgElements = svg.querySelectorAll('polygon, path');
                 const tribalGroups = {};
-                
+
                 svgElements.forEach(element => {
+                    if (!element.classList.contains('tribal') && !element.classList.contains('counties')) {
+                        return; // Skip elements with no class
+                    }
+
                     if (element.classList.contains('tribal')) {
                         element.style.fill = 'rgba(153, 153, 153, 0.5)'; // Default fill color for tribal areas
                         const name = element.getAttribute('data-name');
@@ -91,44 +96,43 @@
 
                         // Remove highlight styles on click
                         gsap.to(element, { duration: 0.15, stroke: '#111111', strokeWidth: 0.3 });
-
-
                     });
 
-                    element.addEventListener('mouseover', (event) => {
-                    if (element.dataset.colored === 'false') {
-                        let strokeColor;
-                        if (element.classList.contains('counties')) {
-                            strokeColor = '#669966';
-                        } else if (element.classList.contains('tribal')) {
-                            strokeColor = '#FF9933';
-                        } else {
-                            strokeColor = '#000000'; // Default stroke color
-                        }
-                        gsap.to(element, { duration: 0.15, stroke: strokeColor, strokeWidth: 1.3 }); // Highlight color
+                    if (element.classList.contains('tribal') || element.classList.contains('counties')) {
+                        element.addEventListener('mouseover', (event) => {
+                            if (element.dataset.colored === 'false') {
+                                let strokeColor;
+                                if (element.classList.contains('counties')) {
+                                    strokeColor = '#669966';
+                                } else if (element.classList.contains('tribal')) {
+                                    strokeColor = '#FF9933';
+                                } else {
+                                    strokeColor = '#000000'; // Default stroke color
+                                }
+                                gsap.to(element, { duration: 0.15, stroke: strokeColor, strokeWidth: 1.3 }); // Highlight color
+                            }
+                        });
+
+                        element.addEventListener('mouseout', () => {
+                            if (element.dataset.colored === 'false') {
+                                gsap.to(element, { duration: 0.15, stroke: '#111111', strokeWidth: 0.3 });
+                            }
+                        });
+
+                        element.addEventListener('contextmenu', (event) => {
+                            event.preventDefault(); // Prevent the default context menu from appearing
+
+                            // Position the color picker at the mouse position
+                            const colorPicker = document.getElementById('colorPicker');
+                            colorPicker.style.display = 'block';
+                            colorPicker.style.left = `${event.pageX}px`;
+                            colorPicker.style.top = `${event.pageY}px`;
+                            colorPicker.value = chosenColor; // Set the color picker's value to the current chosen color
+
+                            // Focus on the color picker to open it
+                            colorPicker.focus();
+                        });
                     }
-                });
-
-                    element.addEventListener('mouseout', () => {
-                        if (element.dataset.colored === 'false') {
-                            gsap.to(element, { duration: 0.15, stroke: '#111111', strokeWidth: 0.3 });
-                        }
-
-                    });
-
-                    element.addEventListener('contextmenu', (event) => {
-                        event.preventDefault(); // Prevent the default context menu from appearing
-
-                        // Position the color picker at the mouse position
-                        const colorPicker = document.getElementById('colorPicker');
-                        colorPicker.style.display = 'block';
-                        colorPicker.style.left = `${event.pageX}px`;
-                        colorPicker.style.top = `${event.pageY}px`;
-                        colorPicker.value = chosenColor; // Set the color picker's value to the current chosen color
-
-                        // Focus on the color picker to open it
-                        colorPicker.focus();
-                    });
                 });
             }
         }
@@ -161,16 +165,7 @@
         });
 
         function clearMap() {
-            svgElements.forEach(element => {
-                if (element.classList.contains('tribal')) {
-                    gsap.to(element, { duration: 0.2, fill: 'rgba(153, 153, 153, 0.5)' }); // Reset tribal areas to default color
-                } else {
-                    gsap.to(element, { duration: 0.2, fill: 'transparent' });
-                }
-                element.dataset.colored = 'false'; // Reset the colored flag
-            });
-            chosenColor = 'transparent'; // Reset the chosen color
-            document.getElementById('colorPicker').value = '#FFFFFF'; // Reset the color picker
+            location.reload(); // Refresh the browser to reset the application
         }
 
         document.getElementById('clearBtn').addEventListener('click', clearMap);
@@ -210,320 +205,349 @@
         }
 
         function addLabels() {
-        const svg = document.querySelector('#mapContainer svg');
-        if (svg) {
-            const paths = svg.querySelectorAll('path');
-            const countyLabels = {};
-            const tribalLabels = {};
+            const svg = document.querySelector('#mapContainer svg');
+            if (svg) {
+                const paths = svg.querySelectorAll('path');
+                const countyLabels = {};
+                const tribalLabels = {};
 
-            paths.forEach(path => {
-                const name = path.getAttribute('data-name');
-                if (name) {
-                    const bbox = path.getBBox();
-                    const area = bbox.width * bbox.height;
-                    const isCounty = path.classList.contains('counties');
-                    const labels = isCounty ? countyLabels : tribalLabels;
+                paths.forEach(path => {
+                    const name = path.getAttribute('data-name');
+                    if (name) {
+                        const bbox = path.getBBox();
+                        const area = bbox.width * bbox.height;
+                        const isCounty = path.classList.contains('counties');
+                        const labels = isCounty ? countyLabels : tribalLabels;
 
-                    if (!labels[name] || labels[name].area < area) {
-                        labels[name] = { path, bbox, area };
+                        if (!labels[name] || labels[name].area < area) {
+                            labels[name] = { path, bbox, area };
+                        }
                     }
+                });
+
+                const placedLabels = [];
+
+                Object.keys(countyLabels).forEach(name => {
+                    const { path, bbox } = countyLabels[name];
+                    const text = createMultiLineText(name, bbox);
+                    text.classList.add('county-label');
+                    svg.appendChild(text);
+
+
+                    adjustLabelSize(text, bbox, svg);
+                    avoidLabelOverlap(text, placedLabels);
+                    placedLabels.push(text);
+                });
+
+                Object.keys(tribalLabels).forEach(name => {
+                    const { path, bbox } = tribalLabels[name];
+                    const text = createMultiLineText(name, bbox);
+                    text.classList.add('tribal-label');
+                    svg.appendChild(text);
+
+                    adjustLabelSize(text, bbox, svg);
+                    avoidLabelOverlap(text, placedLabels);
+                    placedLabels.push(text);
+                });
+
+            }
+        }
+
+        function createMultiLineText(name, bbox, index) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); // Create a line element for leader lines
+            const svg = document.querySelector('#mapContainer svg'); // Ensure svg is correctly referenced
+            text.setAttribute('x', bbox.x + bbox.width / 2);
+            text.setAttribute('y', bbox.y + bbox.height / 2);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('alignment-baseline', 'text-after-edge');
+            text.setAttribute('font-size', '5px');
+            text.setAttribute('fill', 'black');
+
+            if (name === 'Chippewa' || name === 'Nicollet') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 3 + 1);
+                text.setAttribute('dx', '0.8em');
+                text.setAttribute('text-anchor', 'middle');
+            }
+            if (name === 'Sibley' || name === 'Brown') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 1.3);
+                text.setAttribute('text-anchor', 'middle');
+            }
+            if (name === "Le Sueur") {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('text-anchor', 'middle');
+            }
+            if (name === 'Kandiyohi' || name === 'Cottonwood' || name === 'Watonwan' || name === 'Houston' || name === 'Bois Forte') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('text-anchor', 'middle');
+            }
+            if (name === 'Sherburne' || name === 'Benton') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('dx', '0.8em');
+            }
+            if (name === 'Goodhue') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 1.5);
+                text.setAttribute('dx', '-1.7em');
+            }
+            if (name === 'Wadena') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 1.5);
+                text.setAttribute('dx', '-0.33em');
+            }
+            if (name === 'Winona') {
+                text.setAttribute('y', bbox.y + bbox.height / 1.6);
+                text.setAttribute('dx', '-1em');
+            }
+            if (name === 'Dakota' || name === 'Carlton' || name === 'Morrison' || name === 'Becker' || name === 'St. Louis') {
+                text.setAttribute('y', bbox.y + bbox.height / 1.5);
+            }
+            if (name === 'Big Stone' || name === 'Wilkin') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 3.3);
+            }
+            if (name === 'Lac qui Parle') {
+                text.setAttribute('font-size', '5px');
+                text.setAttribute('y', bbox.y + bbox.height / 2);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('text-align', 'middle');
+            }
+            if (name === 'Chisago') {
+                text.setAttribute('font-size', '3.75px');
+                text.setAttribute('y', bbox.y + bbox.height / 1.5);
+                text.setAttribute('dx', '.4em');
+            }
+            if (name === 'Fond du Lac') {
+                text.setAttribute('font-size', '3.5px');
+                text.setAttribute('y', bbox.y + bbox.height / 2.85);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dx', '-1.5pt');
+            }
+            if (name === 'Hennepin' || name === 'Isanti') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 1.75);
+                text.setAttribute('dx', '-0.5em');
+            }
+            if (name === 'Polk') {
+                text.setAttribute('font-size', '5.5px');
+                text.setAttribute('y', bbox.y + bbox.height / 1.2);
+                text.setAttribute('dx', '-0.5em');
+            }
+            if (name === 'Itasca') {
+                text.setAttribute('y', bbox.y + bbox.height / 2);
+                text.setAttribute('dx', '2em');
+            }
+            if (name === 'Beltrami') {
+                text.setAttribute('y', bbox.y + bbox.height / 1.2);
+                text.setAttribute('dx', '1.5em');
+            }
+            if (name === 'Wright') {
+                text.setAttribute('y', bbox.y + bbox.height / 1.5);
+                text.setAttribute('dx', '-0.5em');
+            }
+            if (name === 'Lake of the Woods') {
+                text.setAttribute('y', bbox.y + bbox.height / 2.75);
+            }
+            if (name === 'Red Lake') {
+                text.setAttribute('text-anchor', 'start');
+            }
+            if (name === 'Leech Lake') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 5.75);
+                text.setAttribute('text-anchor', 'start');
+            }
+            if (name === 'Mille Lacs ') {
+                text.setAttribute('font-size', '5px');
+                text.setAttribute('dx', '0.8em');
+                text.setAttribute('y', bbox.y + bbox.height / 3.7);
+                text.setAttribute('transform', `rotate(90, ${bbox.x + bbox.width / 2 - 1}, ${bbox.y + bbox.height / 3.5 + 0.2})`);
+                text.setAttribute('rotate', '-90');
+                text.setAttribute('text-anchor', 'start');
+                text.setAttribute('letter-spacing', '0.55em'); // Add space between each glyph
+            }
+            if (name === 'Mille Lacs') {
+                text.setAttribute('font-size', '3.5px');
+                text.setAttribute('y', bbox.y + bbox.height / 4 + 4);
+                text.setAttribute('dx', '20em');
+                text.setAttribute('text-anchor', 'middle');
+                line.setAttribute('x1', bbox.x + bbox.width / 2);
+                line.setAttribute('y1', bbox.y + bbox.height / 2 + 4);
+                line.setAttribute('x2', bbox.x + bbox.width / 2 + 62); // Adjust the x2 and y2 values as needed
+                line.setAttribute('y2', bbox.y + bbox.height / 2);
+                line.setAttribute('stroke', 'grey');
+                line.setAttribute('stroke-width', '0.3');
+                svg.appendChild(line);
+            }
+            if (name === 'Kanabec') {
+                text.setAttribute('font-size', '3.5px');
+                text.setAttribute('y', bbox.y + bbox.height / 4);
+                text.setAttribute('dx', '0.5em');
+            }
+            if (name === 'Pine') {
+                text.setAttribute('font-size', '5px');
+                text.setAttribute('y', bbox.y + bbox.height / 1.7);
+            }
+            if (name === 'Minnesota Chippewa') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('text-anchor', 'start');
+                text.setAttribute('dx', '0.5em');
+            }
+            if (name === 'White Earth') {
+                text.setAttribute('font-size', '5px');
+                text.setAttribute('y', bbox.y + bbox.height / 2.5);
+                text.setAttribute('text-anchor', 'end');
+            }
+            if (name === 'Washington') {
+                text.setAttribute('font-size', '6px');
+                text.setAttribute('y', bbox.y + bbox.height / 3.7);
+                text.setAttribute('dx', '3em');
+                text.setAttribute('transform', `rotate(90, ${bbox.x + bbox.width / 2}, ${bbox.y + bbox.height / 3.5})`);
+                text.setAttribute('rotate', '-90');
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('letter-spacing', '0.5em'); // Add space between each glyph
+            }
+            if (name === 'Ramsey') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 4);
+                text.setAttribute('dx', '0.1em');
+            }
+            if (name === "Traverse") {
+                text.setAttribute('font-size', '5px');
+                text.setAttribute('y', bbox.y + bbox.height / 1.1);
+                text.setAttribute('dx', '0.4em');
+            }
+            if (name === "Ho-Chunk Nation") {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 1);
+                text.setAttribute('dx', index === 0 ? '1.8em' : '0.8em');
+                text.setAttribute('text-anchor', 'right');
+                text.setAttribute('text-align', 'top');
+            }
+            if (name === "Prairie Island") {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('dx', '4.5em');
+            }
+            if (name === "Lake Traverse") {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 1.5);
+                text.setAttribute('x', bbox.x + bbox.width / 2);
+                text.setAttribute('dx', '0.7em');
+                text.setAttribute('text-anchor', 'right');
+            }
+            if (name === 'Scott') {
+                text.setAttribute('y', bbox.y + bbox.height / 1.5);
+                text.setAttribute('dx', '0.6em');
+            }
+            if (name === 'Shakopee Mdewakanton Sioux') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 3);
+                text.setAttribute('dx', '18em');
+                // Add leader line
+                line.setAttribute('x1', bbox.x + bbox.width / 2);
+                line.setAttribute('y1', bbox.y + bbox.height / 2 + 1.3);
+                line.setAttribute('x2', bbox.x + bbox.width / 2 + 32); // Adjust the x2 and y2 values as needed
+                line.setAttribute('y2', bbox.y + bbox.height / 2);
+                line.setAttribute('stroke', 'grey');
+                line.setAttribute('stroke-width', '0.3');
+                svg.appendChild(line);
+            }
+            if (name === 'Lower Sioux') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('y', bbox.y + bbox.height / 20);
+                text.setAttribute('dx', '3.5em');
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('text-align', 'top');
+                text.setAttribute('alignment-baseline', 'text-before-edge');
+            }
+            if (name === 'Upper Sioux') {
+                text.setAttribute('font-size', '4px');
+                text.setAttribute('dx', '3.5em');
+                text.setAttribute('y', bbox.y + bbox.height / 10);
+            }
+
+            const lines = name.split(' ');
+            if (name === 'Mille Lacs' || name === 'Mille Lacs ' || name === 'Prairie Island' || name === 'Ho-Chunk Nation' || name === 'Shakopee Mdewakanton Sioux' || name === 'Lower Sioux' || name === 'Upper Sioux' || name === 'Lake Traverse' || name === 'Minnesota Chippewa' && text.classList.contains('tribal-label')) {
+                const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                tspan.setAttribute('x', bbox.x + bbox.width / 2);
+                tspan.setAttribute('dy', '0');
+                tspan.textContent = name;
+                text.appendChild(tspan);
+            } else {
+                lines.forEach((line, index) => {
+                    const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                    tspan.setAttribute('x', bbox.x + bbox.width / 2);
+                    tspan.setAttribute('dy', index === 0 ? '0' : '1em');
+                    tspan.textContent = line;
+                    text.appendChild(tspan);
+                });
+            }
+
+            return text;
+        }
+
+        function adjustLabelSize(text, bbox, svg) {
+            let fontSize = 4;
+            while (fontSize > 3 && text.getBBox().width > bbox.width) {
+                fontSize -= 1;
+                text.setAttribute('font-size', fontSize);
+                text.setAttribute('y', parseFloat(text.getAttribute('y')) + 1);
+                text.setAttribute('x', parseFloat(text.getAttribute('x')));
+            }
+
+        }
+
+
+
+        function avoidLabelOverlap(text, placedLabels) {
+            const padding = 0; // Padding around labels
+            const bbox = text.getBBox();
+
+            placedLabels.forEach(placedLabel => {
+                const placedBbox = placedLabel.getBBox();
+                if (isOverlapping(bbox, placedBbox, padding)) {
+                    // Adjust the position of the label to avoid overlap
+                    const currentX = parseFloat(text.getAttribute('x'));
+                    const currentY = parseFloat(text.getAttribute('y'));
+                    const newY = parseFloat(text.getAttribute('y')) + placedBbox.height + padding;
+                    text.setAttribute('y', newY);
+                    const newX = parseFloat(text.getAttribute('x'));
+                    text.setAttribute('x', newX);
                 }
             });
 
-            const placedLabels = [];
 
-            Object.keys(countyLabels).forEach(name => {
-                const { path, bbox } = countyLabels[name];
-                const text = createMultiLineText(name, bbox);
-                text.classList.add('county-label');
-                svg.appendChild(text);
-
-
-                adjustLabelSize(text, bbox, svg);
-                avoidLabelOverlap(text, placedLabels);
-                placedLabels.push(text);
-            });
-
-            Object.keys(tribalLabels).forEach(name => {
-                const { path, bbox } = tribalLabels[name];
-                const text = createMultiLineText(name, bbox);
-                text.classList.add('tribal-label');
-                svg.appendChild(text);
-
-                adjustLabelSize(text, bbox, svg);
-                avoidLabelOverlap(text, placedLabels);
-                placedLabels.push(text);
-            });
-            
-        }
-    }
-
-    function createMultiLineText(name, bbox, svg, index) {
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line'); // Create a line element for leader lines
-        text.setAttribute('x', bbox.x + bbox.width / 2);
-        text.setAttribute('y', bbox.y + bbox.height / 2);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('alignment-baseline', 'text-after-edge');
-        text.setAttribute('font-size', '5px');
-        text.setAttribute('fill', 'black');
-
-        if (name === 'Chippewa' || name==='Nicollet') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 3 + 1);
-            text.setAttribute('dx', '0.8em');
-            text.setAttribute('text-anchor', 'middle');
-        }
-        if (name === 'Sibley' || name === 'Brown') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 1.3 );
-            text.setAttribute('text-anchor', 'middle');
-        }
-        if (name === "Le Sueur") {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('text-anchor', 'middle');
-        }
-        if (name === 'Kandiyohi' || name === 'Cottonwood' || name === 'Watonwan' || name === 'Houston' || name === 'Bois Forte') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('text-anchor', 'middle');
-        }
-        if (name === 'Sherburne' || name === 'Benton') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('dx', '0.8em');
-        }
-        if (name === 'Goodhue') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 1.5 );
-            text.setAttribute('dx', '-1.7em');
-        }
-        if (name === 'Wadena') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 1.5 );
-            text.setAttribute('dx', '-0.33em');
-        }
-        if (name === 'Winona') {
-            text.setAttribute('y', bbox.y + bbox.height / 1.6 );
-            text.setAttribute('dx', '-1em');
-        }
-        if (name === 'Dakota' || name === 'Carlton' || name === 'Morrison' || name === 'Becker' || name === 'St. Louis') {
-            text.setAttribute('y', bbox.y + bbox.height / 1.5 );
-        }
-        if (name === 'Big Stone' || name === 'Wilkin') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 3.3 );
-        }
-        if (name === 'Lac qui Parle') {
-            text.setAttribute('font-size', '5px');
-            text.setAttribute('y', bbox.y + bbox.height / 2 );
-            text.setAttribute('text-anchor', 'middle');
-            text.setAttribute('text-align', 'middle');
-        }
-        if (name === 'Chisago') {
-            text.setAttribute('font-size', '3.75px');
-            text.setAttribute('y', bbox.y + bbox.height / 1.5 );
-            text.setAttribute('dx', '.4em');
-        }
-        if (name === 'Fond du Lac') {
-            text.setAttribute('font-size', '3.5px');
-            text.setAttribute('y', bbox.y + bbox.height / 2.85);
-            text.setAttribute('text-anchor', 'middle');
-            text.setAttribute('dx', '-1.5pt');
-        }
-        if (name === 'Hennepin' || name === 'Isanti') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 1.75 );
-            text.setAttribute('dx', '-0.5em');
-        }
-        if (name === 'Polk') {
-            text.setAttribute('font-size', '5.5px');
-            text.setAttribute('y', bbox.y + bbox.height / 1.2 );
-            text.setAttribute('dx', '-0.5em');
-        }
-        if (name === 'Itasca') {
-            text.setAttribute('y', bbox.y + bbox.height / 2 );
-            text.setAttribute('dx', '2em');
-        }
-        if (name === 'Beltrami') {
-            text.setAttribute('y', bbox.y + bbox.height / 1.2 );
-            text.setAttribute('dx', '1.5em');
-        }
-        if (name === 'Wright') {
-            text.setAttribute('y', bbox.y + bbox.height / 1.5 );
-            text.setAttribute('dx', '-0.5em');
-        }
-        if (name === 'Lake of the Woods') {
-            text.setAttribute('y', bbox.y + bbox.height / 2.75 );
-        }
-        if (name === 'Red Lake') {
-            text.setAttribute('text-anchor', 'start');
-        }
-        if (name === 'Leech Lake') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 5.75 );
-            text.setAttribute('text-anchor', 'start');
-        }
-        if (name === 'Mille Lacs') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('dx', '-0.1em');
-            text.setAttribute('y', bbox.y + bbox.height / 1.7 );
-        }
-        if (name === 'Kanabec') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 3 );
-            text.setAttribute('dx', '0.5em');
-        }
-        if (name === 'Minnesota Chippewa') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('text-anchor', 'start');
-            text.setAttribute('dx', '0.5em');
-        }
-        if (name === 'White Earth') {
-            text.setAttribute('font-size', '5px');
-            text.setAttribute('y', bbox.y + bbox.height / 2.5 );
-            text.setAttribute('text-anchor', 'end');
-        }
-        if (name === 'Washington') {
-            text.setAttribute('font-size', '6px');
-            text.setAttribute('y', bbox.y + bbox.height / 3.7 );
-            text.setAttribute('dx', '3em');
-            text.setAttribute('transform', `rotate(90, ${bbox.x + bbox.width / 2}, ${bbox.y + bbox.height / 3.5})`);
-            text.setAttribute('rotate', '-90');
-            text.setAttribute('text-anchor', 'middle');
-            text.setAttribute('letter-spacing', '0.5em'); // Add space between each glyph
-        }
-        if (name === 'Ramsey') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 4 );
-            text.setAttribute('dx', '0.1em');
-        }
-        if (name === "Traverse") {
-            text.setAttribute('font-size', '5px');
-            text.setAttribute('y', bbox.y + bbox.height / 1.1 );
-            text.setAttribute('dx', '0.4em');
-        }
-        if (name === "Ho-Chunk Nation") {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height/1 );
-            text.setAttribute('dx', index === 0 ? '1.8em' : '0.8em');
-            text.setAttribute('text-anchor', 'right');
-            text.setAttribute('text-align', 'top');
-        }
-        if (name === "Prairie Island") {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('dx', '4.5em');
-        }
-        if (name === "Lake Traverse") {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 1.5 );
-            text.setAttribute('x', bbox.x + bbox.width / 2);
-            text.setAttribute('dx', '0.7em');
-            text.setAttribute('text-anchor', 'right');
-        }
-        if (name === 'Scott') {
-            text.setAttribute('y', bbox.y + bbox.height / 1.5 );
-            text.setAttribute('dx', '0.6em');
-        }
-        if (name === 'Shakopee Mdewakanton Sioux') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 1.5 );
-            text.setAttribute('dx', '17em');
-        }  
-        if ( name === 'Lower Sioux') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('y', bbox.y + bbox.height / 20 ); 
-            text.setAttribute('dx', '3.5em');
-            text.setAttribute('text-anchor', 'middle');
-            text.setAttribute('text-align', 'top');
-            text.setAttribute('alignment-baseline', 'text-before-edge');
-        }
-        if (name === 'Upper Sioux') {
-            text.setAttribute('font-size', '4px');
-            text.setAttribute('dx', '3.5em');
-            text.setAttribute('y', bbox.y + bbox.height / 10);
         }
 
 
 
-        const lines = name.split(' ');
-        if (name === 'Prairie Island' || name === 'Ho-Chunk Nation' || name === 'Shakopee Mdewakanton Sioux' || name === 'Lower Sioux' || name === 'Upper Sioux' || name === 'Fond du Lac' || name === 'Lake Traverse' || name === 'Minnesota Chippewa') {
-            const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-            tspan.setAttribute('x', bbox.x + bbox.width / 2);
-            tspan.setAttribute('dy', '0');
-            tspan.textContent = name;
-            text.appendChild(tspan);
-        } else {
-            lines.forEach((line, index) => {
-            const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-            tspan.setAttribute('x', bbox.x + bbox.width / 2);
-            tspan.setAttribute('dy', index === 0 ? '0' : '1em');
-            tspan.textContent = line;
-            text.appendChild(tspan);
-            });
+        function isOverlapping(bbox1, bbox2, padding) {
+            return !(
+                bbox1.x + bbox1.width + padding < bbox2.x ||
+                bbox1.x - padding > bbox2.x + bbox2.width ||
+                bbox1.y + bbox1.height + padding < bbox2.y ||
+                bbox1.y - padding > bbox2.y + bbox2.height
+            );
         }
 
-        return text;
-    }
 
-    function adjustLabelSize(text, bbox, svg) {
-        let fontSize = 4;
-        while (fontSize > 3 && text.getBBox().width > bbox.width) {
-            fontSize -= 1;
-            text.setAttribute('font-size', fontSize);
-            text.setAttribute('y', parseFloat(text.getAttribute('y')) + 1);
-            text.setAttribute('x', parseFloat(text.getAttribute('x')));
-        }
+        function updateLabels(layer) {
+            const svg = document.querySelector('#mapContainer svg');
+            if (svg) {
+                const countyLabels = svg.querySelectorAll('.county-label');
+                const tribalLabels = svg.querySelectorAll('.tribal-label');
 
-    }
+                countyLabels.forEach(label => {
+                    label.style.display = layer === 'counties' || layer === 'all' ? 'block' : 'none';
+                });
 
-  
-
-    function avoidLabelOverlap(text, placedLabels) {
-        const padding = 0; // Padding around labels
-        const bbox = text.getBBox();
-
-        placedLabels.forEach(placedLabel => {
-            const placedBbox = placedLabel.getBBox();
-            if (isOverlapping(bbox, placedBbox, padding)) {
-                // Adjust the position of the label to avoid overlap
-                const currentX = parseFloat(text.getAttribute('x'));
-                const currentY = parseFloat(text.getAttribute('y'));
-                const newY = parseFloat(text.getAttribute('y')) + placedBbox.height + padding;
-                text.setAttribute('y', newY);
-                const newX = parseFloat(text.getAttribute('x'));
-                text.setAttribute('x', newX);
+                tribalLabels.forEach(label => {
+                    label.style.display = layer === 'tribal' || layer === 'all' ? 'block' : 'none';
+                });
             }
-        });
-
-        
-    }
-
-    
-
-    function isOverlapping(bbox1, bbox2, padding) {
-        return !(
-            bbox1.x + bbox1.width + padding < bbox2.x ||
-            bbox1.x - padding > bbox2.x + bbox2.width ||
-            bbox1.y + bbox1.height + padding < bbox2.y ||
-            bbox1.y - padding > bbox2.y + bbox2.height
-        );
-    }
-
-
-    function updateLabels(layer) {
-        const svg = document.querySelector('#mapContainer svg');
-        if (svg) {
-            const countyLabels = svg.querySelectorAll('.county-label');
-            const tribalLabels = svg.querySelectorAll('.tribal-label');
-
-            countyLabels.forEach(label => {
-                label.style.display = layer === 'counties' || layer === 'all' ? 'block' : 'none';
-            });
-
-            tribalLabels.forEach(label => {
-                label.style.display = layer === 'tribal' || layer === 'all' ? 'block' : 'none';
-            });
         }
-    }
+
 
         fetchMapData();
     </script>
