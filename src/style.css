@@ -48,7 +48,6 @@ body {
     align-items: center;
     width: 100%; /* Adjust width as needed */
     height: 1200px; /* Increase the height */
-    margin: 10px 0; /* Add some margin for spacing */
 }
 
 svg:active {

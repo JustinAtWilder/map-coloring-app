@@ -165,7 +165,7 @@ document.getElementById("downloadBtn").addEventListener("click", () => {
 
 async function fetchMapData() {
   try {
-    const mapUrl = "./assets/map_layers_exp2.svg";
+    const mapUrl = "./assets/map_layers_exp2-cropped.svg";
     const response = await fetch(mapUrl);
     if (!response.ok) throw new Error("Network response was not ok");
     const data = await response.text();
@@ -182,7 +182,7 @@ async function fetchMapData() {
        // Add pan and zoom functionality
     const panZoomInstance = svgPanZoom(svgElement, {
       zoomEnabled: true,
-      controlIconsEnabled: true,
+      controlIconsEnabled: false,
       fit: true,
       center: true,
     });
@@ -190,6 +190,7 @@ async function fetchMapData() {
     document
       .getElementById("zoomIn")
       .addEventListener("click", () => panZoomInstance.zoomIn());
+      panZoomInstance.disableMouseWheelZoom();
     document
       .getElementById("zoomOut")
       .addEventListener("click", () => panZoomInstance.zoomOut());
