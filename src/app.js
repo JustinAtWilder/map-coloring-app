@@ -165,7 +165,7 @@ document.getElementById("downloadBtn").addEventListener("click", () => {
 
 async function fetchMapData() {
   try {
-    const mapUrl = "./assets/map_layers_exp2-cropped.svg";
+    const mapUrl = "src/assets/map_layers_exp2-cropped.svg";
     const response = await fetch(mapUrl);
     if (!response.ok) throw new Error("Network response was not ok");
     const data = await response.text();
