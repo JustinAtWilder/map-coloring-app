@@ -1,0 +1,22 @@
+{
+  "name": "map-coloring-app",
+  "version": "1.0.0",
+  "description": "A coloring map for Sauer Family Foundation.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "live-server src",
+    "build": "echo 'Build step not defined'"
+  },
+  "dependencies": {
+    "gulp": "^5.0.0",
+    "svg-pan-zoom": "^3.5.0"
+  },
+  "keywords": [
+    "SVG",
+    "pan",
+    "zoom",
+    "interactive"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

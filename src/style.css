@@ -36,6 +36,7 @@ body {
 .colorBtn {
     width: 30px;
     height: 30px;
+    border-radius: 3px;
     border: none;
     cursor: pointer;
 }
@@ -48,6 +49,35 @@ body {
     width: 100%; /* Adjust width as needed */
     height: 1200px; /* Increase the height */
     margin: 10px 0; /* Add some margin for spacing */
+}
+
+svg:active {
+    cursor: grabbing;
+}
+
+.zoom-controls {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.zoom-controls button {
+    margin: 5px 0;
+    padding: 5px 5px;
+    border: none;
+    border-radius: 3px;
+    background-color: #a9a7a7b7; /* Gray color */
+    color: white;
+    cursor: pointer;
+    width: 30px; /* Make buttons square */
+    height: 30px; /* Make buttons square */
+    font-size: 15px;
 }
 
 /* Media queries for common screen sizes */
@@ -72,6 +102,7 @@ body {
         padding: 8px 16px;
         margin: 4px;
     }
+
 }
 
 @media (max-width: 576px) {
@@ -83,4 +114,5 @@ body {
         padding: 6px 12px;
         margin: 3px;
     }
+
 }

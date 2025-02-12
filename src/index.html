@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sauermap.org</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/x-icon" href="assets/noun-tree-16622.ico" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.5.0/dist/svg-pan-zoom.min.js"></script>
+ </head>
+
+  <body>
+    <div class="container">
+      <div class="controls">
+        <select id="layerSelector">
+          <option value="all">All</option>
+          <option value="tribal">Tribal Areas</option>
+          <option value="counties">Counties</option>
+        </select>
+        <button id="clearBtn">Clear Map</button>
+        <button id="downloadBtn">Download Image</button>
+      </div>
+
+      <div id="colorPalette">
+        <button
+          class="colorBtn"
+          style="background-color: transparent; border: 1px solid #000"
+          data-color="transparent"
+        ></button>
+        <button
+          class="colorBtn"
+          style="background-color: #2074b0"
+          data-color="#2074b0"
+        ></button>
+        <button
+          class="colorBtn"
+          style="background-color: #97c350"
+          data-color="#97c350"
+        ></button>
+        <button
+          class="colorBtn"
+          style="background-color: #d62b2a"
+          data-color="#D62B2A"
+        ></button>
+        <button
+          class="colorBtn"
+          style="background-color: #f89c24"
+          data-color="#F89C24"
+        ></button>
+        <button
+          class="colorBtn"
+          style="background-color: #f1e606"
+          data-color="#F1E606"
+        ></button>
+        <button
+          class="colorBtn"
+          style="background-color: #9256a1"
+          data-color="#9256A1"
+        ></button>
+        <button
+          class="colorBtn"
+          style="background-color: #93683f"
+          data-color="#93683F"
+        ></button>
+        <button
+          class="colorBtn"
+          style="background-color: #e0e0e0"
+          data-color="#E0E0E0"
+        ></button>
+      </div>
+
+      <div id="mapContainer"></div>
+      <input
+        type="color"
+        id="colorPicker"
+        style="display: none; position: absolute"
+      />
+      <div
+        id="tooltip"
+        class="tooltiptext"
+        style="position: absolute; display: none; padding: 2px"
+      ></div>
+
+      <div class="zoom-controls">
+        <button id="zoomIn">+</button>
+        <button id="zoomOut">-</button>
+        <button id="resetZoom"><i class="fas fa-home"></i></button>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+
+</html>
