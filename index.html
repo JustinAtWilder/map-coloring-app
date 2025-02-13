@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0" />
     <title>sauermap.org</title>
     <link rel="stylesheet" href="src/style.css" />
     <link rel="icon" type="image/x-icon" href="src/assets/noun-tree-16622.ico" />
@@ -22,8 +22,10 @@
           <option value="tribal">Tribal Areas</option>
           <option value="counties">Counties</option>
         </select>
+        </div>
+      <div>
         <button id="clearBtn">Clear Map</button>
-        <button id="downloadBtn">Download Image</button>
+        <button id="downloadBtn">Download</button>
       </div>
 
       <div id="colorPalette">
@@ -73,25 +75,21 @@
           data-color="#E0E0E0"
         ></button>
       </div>
-
-      <div id="mapContainer"></div>
-      <input
-        type="color"
-        id="colorPicker"
-        style="display: none; position: absolute"
-      />
-      <div
-        id="tooltip"
-        class="tooltiptext"
-        style="position: absolute; display: none; padding: 2px"
-      ></div>
-
       <div class="zoom-controls">
         <button id="zoomIn">+</button>
         <button id="zoomOut">-</button>
         <button id="resetZoom"><i class="fas fa-home"></i></button>
       </div>
     </div>
+    <section class="canvas">
+          <div id="mapContainer"></div>
+      <input
+        type="color"
+        id="colorPicker"
+        style="display: none; position: absolute"
+      />
+    </section>
+
     <script src="src/app.js"></script>
   </body>
 

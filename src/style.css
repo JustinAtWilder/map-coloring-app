@@ -17,6 +17,14 @@ body {
     width: 100%;
 }
 
+.canvas {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;
+    width: 100%; /* Adjust width as needed */
+}
+
 .controls {
     display: flex;
     justify-content: center;
@@ -26,14 +34,14 @@ body {
 }
 
 #colorPalette {
-    display: flex;
+    display: inline;
     justify-content: center;
     align-items: center;
     gap: 10px; /* Add some space between the elements */
     margin: 20px 0; /* Add some margin for spacing */
 }
 
-.colorBtn {
+.colorBtn, .stripesBtn {
     width: 30px;
     height: 30px;
     border-radius: 3px;
@@ -42,11 +50,6 @@ body {
 }
 
 .stripesBtn {
-    width: 30px;
-    height: 30px;
-    border-radius: 3px;
-    border: none;
-    cursor: pointer;
     background-image: url('/src/assets/css-pattern-by-magicpattern.png'); /* Adjust the path to your pattern image */
     background-size: cover;
 }
@@ -57,7 +60,7 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%; /* Adjust width as needed */
-    height: 1200px; /* Increase the height */
+    height: 800px; /* Adjust the height */
 }
 
 svg:active {
@@ -89,39 +92,203 @@ svg:active {
     font-size: 15px;
 }
 
+#clearBtn, #downloadBtn {
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #a9a7a7b7; /* Blue color */
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
 /* Media queries for common screen sizes */
 @media (max-width: 1200px) {
-    #mapContainer {
+    #mapContainer .canvas {
         width: 90%;
+        height: 700px; /* Adjust height for smaller screens */
+    }
+
+    .zoom-controls button {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+
+    #clearBtn, #downloadBtn {
+        padding: 8px 16px;
+        font-size: 14px;
     }
 }
 
 @media (max-width: 992px) {
     #mapContainer {
         width: 95%;
+        height: 600px; /* Adjust height for smaller screens */
+    }
+
+    .zoom-controls button {
+        width: 26px;
+        height: 26px;
+        font-size: 13px;
+    }
+
+    #clearBtn, #downloadBtn {
+        padding: 8px 16px;
+        font-size: 14px;
     }
 }
 
 @media (max-width: 768px) {
     #mapContainer {
         width: 100%;
+        height: 500px; /* Adjust height for smaller screens */
+    }
+
+    .zoom-controls {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+    }
+
+    .zoom-controls button {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+
+    .controls, #colorPalette {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .colorBtn, .stripesBtn {
+        width: 24px;
+        height: 24px;
+    }
+
+    #clearBtn, #downloadBtn {
+        padding: 6px 12px;
+        font-size: 12px;
     }
 
     button {
         padding: 8px 16px;
         margin: 4px;
     }
-
 }
 
 @media (max-width: 576px) {
-    #mapContainer {
+    #mapContainer .canvas {
         width: 100%;
+        height: 400px; /* Adjust height for smaller screens */
+    }
+
+    .zoom-controls {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+    }
+
+    .zoom-controls button {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+    }
+
+    .controls, #colorPalette {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .colorBtn, .stripesBtn {
+        width: 20px;
+        height: 20px;
+    }
+
+    #clearBtn, #downloadBtn {
+        padding: 6px 12px;
+        font-size: 11px;
     }
 
     button {
         padding: 6px 12px;
         margin: 3px;
     }
+}
 
+@media (max-width: 375px) {
+    #mapContainer .canvas {
+        width: 100%;
+        height: 400px; /* Adjust height for smaller screens */
+    }
+
+    .zoom-controls {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+    }
+
+    .zoom-controls button {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+
+    .controls, #colorPalette {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .colorBtn, .stripesBtn {
+        width: 18px;
+        height: 18px;
+    }
+
+    #clearBtn, #downloadBtn {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    button {
+        padding: 4px 8px;
+        margin: 2px;
+    }
+}
+
+/* Media query for landscape orientation of a device with dimensions 666px by 375px */
+@media (max-width: 666px) and (orientation: landscape) {
+    #mapContainer .canvas {
+        width: 100%;
+        height: 300px; /* Adjust height for landscape orientation */
+    }
+
+    .zoom-controls {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+    }
+
+    .controls, #colorPalette {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .colorBtn, .stripesBtn {
+        width: 18px;
+        height: 18px;
+    }
+
+    #clearBtn, #downloadBtn {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    button {
+        padding: 4px 8px;
+        margin: 2px;
+    }
 }

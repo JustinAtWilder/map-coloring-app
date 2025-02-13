@@ -1,19 +1,32 @@
 let chosenColor = "#FFFFFF";
 let svgElements;
+let panZoomInstance;
 
-document.getElementById("colorPicker").addEventListener("input", (event) => {
+function handleColorPickerEvent(event) {
+  event.preventDefault();
   chosenColor = event.target.value;
-});
+}
 
-document.querySelectorAll(".colorBtn, .stripesBtn").forEach((button) => {
-  button.addEventListener("click", () => {
+["touchstart", "pointerdown", "click"].forEach((eventType) => {
+  document.getElementById("colorPicker").addEventListener(eventType, handleColorPickerEvent);
+  });
+
+
+  function handleColorButtonClick(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
     if (button.classList.contains("stripesBtn")) {
       chosenColor = "url(#stripesPattern)";
     } else {
       chosenColor = button.dataset.color;
     }
+  }
+
+  document.querySelectorAll(".colorBtn, .stripesBtn").forEach((button) => {
+    ["touchstart", "pointerdown", "mousedown", "click", "mouseup", "pointerup"].forEach((eventType) => {
+      button.addEventListener(eventType, handleColorButtonClick);
+    });
   });
-});
 
 function addColoringFunctionality() {
   const svg = document.querySelector("#mapContainer svg");
@@ -41,7 +54,8 @@ function addColoringFunctionality() {
       }
       element.dataset.colored = "false"; // Add a flag to track the fill state
 
-      element.addEventListener("click", () => {
+      function handleElementClick(event) {
+        event.preventDefault();
         const name = element.getAttribute("data-name");
         const isColored = element.dataset.colored === "true";
         const newColor = isColored ? "transparent" : chosenColor;
@@ -49,10 +63,10 @@ function addColoringFunctionality() {
 
         if (element.classList.contains("tribal")) {
           tribalGroups[name].forEach((tribalElement) => {
-            gsap.to(tribalElement, { duration: 0.2, fill: newColor });
+            gsap.to(tribalElement, { duration: 0.15, fill: newColor });
           });
         } else {
-          gsap.to(element, { duration: 0.2, fill: newColor });
+          gsap.to(element, { duration: 0.15, fill: newColor });
         }
 
         // Remove highlight styles on click
@@ -61,6 +75,38 @@ function addColoringFunctionality() {
           stroke: "#111111",
           strokeWidth: 0.3,
         });
+      }
+
+      // Add event listeners for element click
+      function handleElementClick(event) {
+        event.preventDefault();
+        const name = element.getAttribute("data-name");
+        const isColored = element.dataset.colored === "true";
+        const newColor = isColored ? "transparent" : chosenColor;
+        element.dataset.colored = !isColored;
+
+        if (element.classList.contains("tribal")) {
+          tribalGroups[name].forEach((tribalElement) => {
+            gsap.to(tribalElement, { duration: 0.15, fill: newColor });
+          });
+        } else {
+          gsap.to(element, { duration: 0.15, fill: newColor });
+        }
+
+        // Remove highlight styles on click
+        gsap.to(element, {
+          duration: 0.15,
+          stroke: "#111111",
+          strokeWidth: 0.3,
+        });
+
+        
+      }
+      
+
+      // Add event listeners for element click
+      ["touchstart", "pointerdown", "mousedown", "click", "mouseup", "pointerup"].forEach((eventType) => {
+        element.addEventListener(eventType, handleElementClick);
       });
 
       if (
@@ -94,6 +140,7 @@ function addColoringFunctionality() {
             });
           }
         });
+
 
         element.addEventListener("contextmenu", (event) => {
           event.preventDefault(); // Prevent the default context menu from appearing
@@ -190,23 +237,31 @@ async function fetchMapData() {
       fit: true,
       center: true,
     });
+    
+    
     // Add event listeners for zoom controls
-    document
-      .getElementById("zoomIn")
-      .addEventListener("click", () => panZoomInstance.zoomIn());
-      panZoomInstance.disableMouseWheelZoom();
-    document
-      .getElementById("zoomOut")
-      .addEventListener("click", () => panZoomInstance.zoomOut());
-    document
-      .getElementById("resetZoom")
-      .addEventListener("click", () => {
-      panZoomInstance.resetZoom();
-      panZoomInstance.resetPan();
+    ["touchstart", "pointerdown", "mousedown", "click", "mouseup", "pointerup"].forEach((eventType) => {
+      document.getElementById("zoomIn").addEventListener(eventType, (event) => {
+        event.preventDefault();
+        panZoomInstance.zoomIn();
       });
-  } catch (error) {
-    console.error("Error fetching the map:", error.message, error.stack);
-  }
+      document.getElementById("zoomOut").addEventListener(eventType, (event) => {
+        event.preventDefault();
+        panZoomInstance.zoomOut();
+      });
+      document.getElementById("resetZoom").addEventListener(eventType, (event) => {
+        event.preventDefault();
+        panZoomInstance.resetZoom();
+        panZoomInstance.resetPan();
+      });
+    });
+
+    panZoomInstance.disableMouseWheelZoom();
+  // Restore the map state from local storage
+  restoreMapState();
+} catch (error) {
+  console.error("Error fetching the map:", error.message, error.stack);
+}
 }
 
 fetchMapData();
@@ -257,6 +312,49 @@ function addLabels() {
     });
   }
 }
+
+function saveMapState() {
+  const svg = document.querySelector("#mapContainer svg");
+  if (svg) {
+    const elements = svg.querySelectorAll("polygon, path");
+    const mapState = Array.from(elements).map((element) => ({
+      id: element.id,
+      fill: element.style.fill,
+    }));
+    sessionStorage.setItem("mapState", JSON.stringify(mapState));
+  }
+}
+
+function restoreMapState() {
+  const svg = document.querySelector("#mapContainer svg");
+  if (svg) {
+    const mapState = JSON.parse(sessionStorage.getItem("mapState"));
+    if (mapState) {
+      mapState.forEach(({ id, fill }) => {
+        const element = svg.querySelector("polygon, path");
+        if (element) {
+          element.style.fill = fill;
+        }
+      });
+    }
+  }
+}
+
+// Add event listener for orientation changes
+window.addEventListener("orientationchange", () => {
+  const svg = document.querySelector("#mapContainer svg");
+  let panZoomInstance = svgPanZoom(document.querySelector("#mapContainer .canvas"));
+  saveMapState();
+  restoreMapState();
+  panZoomInstance.center();
+  panZoomInstance.fit();
+  panZoomInstance.resetPan();
+  canvas.style.width = "100%";
+  canvas.style.justifyContent = "center";
+  canvas.style.justifySelf = "center";
+  window.location.replace(window.location.href)
+});
+
 
 function createMultiLineText(name, bbox, index) {
   const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
