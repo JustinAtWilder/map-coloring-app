@@ -5,9 +5,13 @@ document.getElementById("colorPicker").addEventListener("input", (event) => {
   chosenColor = event.target.value;
 });
 
-document.querySelectorAll(".colorBtn").forEach((button) => {
+document.querySelectorAll(".colorBtn, .stripesBtn").forEach((button) => {
   button.addEventListener("click", () => {
-    chosenColor = button.dataset.color;
+    if (button.classList.contains("stripesBtn")) {
+      chosenColor = "url(#stripesPattern)";
+    } else {
+      chosenColor = button.dataset.color;
+    }
   });
 });
 
