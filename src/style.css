@@ -23,6 +23,7 @@ body {
     align-items: center;
     overflow: visible;
     width: 100%; /* Adjust width as needed */
+    position: relative;
 }
 
 .controls {
@@ -51,7 +52,13 @@ body {
 
 .stripesBtn {
     background-image: url('/src/assets/css-pattern-by-magicpattern.png'); /* Adjust the path to your pattern image */
+    background-repeat: repeat;
     background-size: cover;
+}
+
+#stripesPattern {
+    background-image: url('/src/assets/css-pattern-by-magicpattern.png'); /* Adjust the path to your pattern image */
+    background-repeat: repeat;
 }
 
 #mapContainer {
@@ -61,6 +68,7 @@ body {
     align-items: center;
     width: 100%; /* Adjust width as needed */
     height: 800px; /* Adjust the height */
+    position: relative;
 }
 
 svg:active {
