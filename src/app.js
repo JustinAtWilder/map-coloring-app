@@ -63,17 +63,17 @@ function addColoringFunctionality() {
 
         if (element.classList.contains("tribal")) {
           tribalGroups[name].forEach((tribalElement) => {
-            gsap.to(tribalElement, { duration: 0.15, fill: newColor });
+            gsap.to(tribalElement, { duration: 0.15, fill: newColor, stroke: newColor, fillOpacity: 0.75 });
           });
         } else {
-          gsap.to(element, { duration: 0.15, fill: newColor });
+          gsap.to(element, { duration: 0.15, fill: newColor, stroke: newColor, fillOpacity: 0.75 });
         }
 
         // Remove highlight styles on click
         gsap.to(element, {
           duration: 0.15,
-          stroke: "#111111",
-          strokeWidth: 0.3,
+          stroke: "#000000",
+          strokeWidth: 0.1,
         });
       }
 
@@ -87,18 +87,26 @@ function addColoringFunctionality() {
 
         if (element.classList.contains("tribal")) {
           tribalGroups[name].forEach((tribalElement) => {
-            gsap.to(tribalElement, { duration: 0.15, fill: newColor });
+            gsap.to(tribalElement, { duration: 0.15, fill: newColor, stroke: newColor, fillOpacity: 0.75 });
           });
         } else {
-          gsap.to(element, { duration: 0.15, fill: newColor });
+          gsap.to(element, { duration: 0.15, fill: newColor, stroke: newColor, fillOpacity: 0.75 });
         }
 
-        // Remove highlight styles on click
-        gsap.to(element, {
-          duration: 0.15,
-          stroke: "#111111",
-          strokeWidth: 0.3,
-        });
+if (element.classList.contains("tribal")) {
+          // Remove highlight styles on click
+          gsap.to(element, {
+            duration: 0.15,
+            stroke: "transparent",
+            strokeWidth: 0.1,
+          });
+} else {
+          gsap.to(element, {
+            duration: 0.15,
+            stroke: "#000000",
+            strokeWidth: 0.3,
+          });
+        }
 
         
       }
@@ -131,15 +139,23 @@ function addColoringFunctionality() {
           }
         });
 
-        element.addEventListener("mouseout", () => {
-          if (element.dataset.colored === "false") {
-            gsap.to(element, {
-              duration: 0.15,
-              stroke: "#111111",
-              strokeWidth: 0.3,
-            });
-          }
-        });
+if (element.classList) {
+          element.addEventListener("mouseout", () => {
+            if (element.dataset.colored === "false") {
+              gsap.to(element, {
+                duration: 0.15,
+                stroke: "#000000",
+                strokeWidth: 0.1,
+              });
+            } else { 
+              gsap.to(element, {
+                duration: 0.15,
+                stroke: "#000000",
+                strokeWidth: 0.3,
+              });
+            }
+          });
+}
 
 
         element.addEventListener("contextmenu", (event) => {
