@@ -9,24 +9,23 @@ function handleColorPickerEvent(event) {
 
 ["touchstart", "pointerdown", "click"].forEach((eventType) => {
   document.getElementById("colorPicker").addEventListener(eventType, handleColorPickerEvent);
-  });
+});
 
-
-  function handleColorButtonClick(event) {
-    event.preventDefault();
-    const button = event.currentTarget;
-    if (button.classList.contains("stripesBtn")) {
-      chosenColor = "url(#stripesPattern)";
-    } else {
-      chosenColor = button.dataset.color;
-    }
+function handleColorButtonClick(event) {
+  event.preventDefault();
+  const button = event.currentTarget;
+  if (button.classList.contains("stripesBtn")) {
+    chosenColor = "url(#stripesPattern)";
+  } else {
+    chosenColor = button.dataset.color;
   }
+}
 
-  document.querySelectorAll(".colorBtn, .stripesBtn").forEach((button) => {
-    ["touchstart", "pointerdown", "mousedown", "click", "mouseup", "pointerup"].forEach((eventType) => {
-      button.addEventListener(eventType, handleColorButtonClick);
-    });
+document.querySelectorAll(".colorBtn, .stripesBtn").forEach((button) => {
+  ["touchstart", "pointerdown", "mousedown", "click", "mouseup", "pointerup"].forEach((eventType) => {
+    button.addEventListener(eventType, handleColorButtonClick);
   });
+});
 
 function addColoringFunctionality() {
   const svg = document.querySelector("#mapContainer svg");
@@ -43,7 +42,9 @@ function addColoringFunctionality() {
       }
 
       if (element.classList.contains("tribal")) {
-        element.style.fill = "rgba(153, 153, 153, 0.5)"; // Default fill color for tribal areas
+        element.style.fill = "rgba(153, 153, 153, 0.5)";
+        element.style.strokeColor = "#000000";
+        element.style.strokeWidth = 0.1; // Default fill color for tribal areas
         const name = element.getAttribute("data-name");
         if (!tribalGroups[name]) {
           tribalGroups[name] = [];
@@ -58,16 +59,33 @@ function addColoringFunctionality() {
         event.preventDefault();
         const name = element.getAttribute("data-name");
         const isColored = element.dataset.colored === "true";
-        const newColor = isColored ? "transparent" : chosenColor;
-        element.dataset.colored = !isColored;
 
         if (element.classList.contains("tribal")) {
-          tribalGroups[name].forEach((tribalElement) => {
-            gsap.to(tribalElement, { duration: 0.15, fill: newColor, stroke: newColor, fillOpacity: 0.75 });
-          });
-        } else {
-          gsap.to(element, { duration: 0.15, fill: newColor, stroke: newColor, fillOpacity: 0.75 });
+          if (isColored) {
+            // Reset the fill to the default color
+            tribalGroups[name].forEach((tribalElement) => {
+              gsap.to(tribalElement, {
+                duration: 0.15,
+                fill: "rgba(153, 153, 153, 0.5)",
+                stroke: "#000000",
+                fillOpacity: 1,
+              });
+            });
+          } else {
+            // Set the fill to the chosen color
+            tribalGroups[name].forEach((tribalElement) => {
+              gsap.to(tribalElement, {
+                duration: 0.15,
+                fill: chosenColor,
+                stroke: chosenColor,
+                fillOpacity: 0.75,
+              });
+            });
+          }
         }
+
+        // Toggle the colored state
+        element.dataset.colored = !isColored;
 
         // Remove highlight styles on click
         gsap.to(element, {
@@ -76,41 +94,6 @@ function addColoringFunctionality() {
           strokeWidth: 0.1,
         });
       }
-
-      // Add event listeners for element click
-      function handleElementClick(event) {
-        event.preventDefault();
-        const name = element.getAttribute("data-name");
-        const isColored = element.dataset.colored === "true";
-        const newColor = isColored ? "transparent" : chosenColor;
-        element.dataset.colored = !isColored;
-
-        if (element.classList.contains("tribal")) {
-          tribalGroups[name].forEach((tribalElement) => {
-            gsap.to(tribalElement, { duration: 0.15, fill: newColor, stroke: newColor, fillOpacity: 0.75 });
-          });
-        } else {
-          gsap.to(element, { duration: 0.15, fill: newColor, stroke: newColor, fillOpacity: 0.75 });
-        }
-
-if (element.classList.contains("tribal")) {
-          // Remove highlight styles on click
-          gsap.to(element, {
-            duration: 0.15,
-            stroke: "transparent",
-            strokeWidth: 0.1,
-          });
-} else {
-          gsap.to(element, {
-            duration: 0.15,
-            stroke: "#000000",
-            strokeWidth: 0.3,
-          });
-        }
-
-        
-      }
-      
 
       // Add event listeners for element click
       ["touchstart", "pointerdown", "mousedown", "click", "mouseup", "pointerup"].forEach((eventType) => {
@@ -139,15 +122,18 @@ if (element.classList.contains("tribal")) {
           }
         });
 
-if (element.classList) {
+        if (element.classList) {
           element.addEventListener("mouseout", () => {
-            if (element.dataset.colored === "false") {
-              gsap.to(element, {
-                duration: 0.15,
-                stroke: "#000000",
-                strokeWidth: 0.1,
+            const name = element.getAttribute("data-name");
+            if (element.classList.contains("tribal")) {
+              tribalGroups[name].forEach((tribalElement) => {
+                gsap.to(tribalElement, {
+                  duration: 0.15,
+                  stroke: "#000000",
+                  strokeWidth: 0.1,
+                });
               });
-            } else { 
+            } else {
               gsap.to(element, {
                 duration: 0.15,
                 stroke: "#000000",
@@ -155,8 +141,7 @@ if (element.classList) {
               });
             }
           });
-}
-
+        }
 
         element.addEventListener("contextmenu", (event) => {
           event.preventDefault(); // Prevent the default context menu from appearing
@@ -242,19 +227,17 @@ async function fetchMapData() {
     addLabels();
     addColoringFunctionality();
 
- 
     const svgElement = document.querySelector("#mapContainer svg");
     if (!svgElement) throw new Error("SVG element not found");
 
-       // Add pan and zoom functionality
+    // Add pan and zoom functionality
     const panZoomInstance = svgPanZoom(svgElement, {
       zoomEnabled: true,
       controlIconsEnabled: false,
       fit: true,
       center: true,
     });
-    
-    
+
     // Add event listeners for zoom controls
     ["touchstart", "pointerdown", "mousedown", "click", "mouseup", "pointerup"].forEach((eventType) => {
       document.getElementById("zoomIn").addEventListener(eventType, (event) => {
@@ -273,11 +256,11 @@ async function fetchMapData() {
     });
 
     panZoomInstance.disableMouseWheelZoom();
-  // Restore the map state from local storage
-  restoreMapState();
-} catch (error) {
-  console.error("Error fetching the map:", error.message, error.stack);
-}
+    // Restore the map state from local storage
+    restoreMapState();
+  } catch (error) {
+    console.error("Error fetching the map:", error.message, error.stack);
+  }
 }
 
 fetchMapData();
@@ -370,7 +353,6 @@ window.addEventListener("orientationchange", () => {
   canvas.style.justifySelf = "center";
   window.location.replace(window.location.href)
 });
-
 
 function createMultiLineText(name, bbox, index) {
   const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
