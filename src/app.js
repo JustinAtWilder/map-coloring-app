@@ -32,6 +32,7 @@ function addColoringFunctionality() {
   if (svg) {
     svgElements = svg.querySelectorAll("polygon, path");
     const tribalGroups = {};
+    const countyGroups = {};
 
     svgElements.forEach((element) => {
       if (
@@ -50,8 +51,13 @@ function addColoringFunctionality() {
           tribalGroups[name] = [];
         }
         tribalGroups[name].push(element);
-      } else {
+      } else if (element.classList.contains("counties")) {
         element.style.fill = "transparent";
+        const name = element.getAttribute("data-name");
+        if (!countyGroups[name]) {
+          countyGroups[name] = [];
+        }
+        countyGroups[name].push(element);
       }
       element.dataset.colored = "false"; // Add a flag to track the fill state
 
@@ -75,6 +81,28 @@ function addColoringFunctionality() {
             // Set the fill to the chosen color
             tribalGroups[name].forEach((tribalElement) => {
               gsap.to(tribalElement, {
+                duration: 0.15,
+                fill: chosenColor,
+                stroke: chosenColor,
+                fillOpacity: 0.75,
+              });
+            });
+          }
+        } else if (element.classList.contains("counties")) {
+          if (isColored) {
+            // Reset the fill to transparent
+            countyGroups[name].forEach((countyElement) => {
+              gsap.to(countyElement, {
+                duration: 0.15,
+                fill: "transparent",
+                stroke: "#000000",
+                fillOpacity: 1,
+              });
+            });
+          } else {
+            // Set the fill to the chosen color
+            countyGroups[name].forEach((countyElement) => {
+              gsap.to(countyElement, {
                 duration: 0.15,
                 fill: chosenColor,
                 stroke: chosenColor,
