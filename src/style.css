@@ -71,12 +71,10 @@ body {
 
 #legendContainer {
     position: fixed; /* Fix the legend in the viewport */
-    top: 280px; /* Adjust the vertical position as needed */
+    top: 480px; /* Adjust the vertical position as needed */
     left: calc(100% - 220px); /* Position it near the right edge of the viewport */
-    width: 200px;
-    height: 260px;
-    border: 0.5px solid #ccc;
-    background-color: #ffffff;
+    width: auto;
+    height: auto;
     overflow-y: auto;
     margin-left: 10px; /* Add some space from the left edge */
     padding: 2px;
@@ -86,28 +84,142 @@ body {
     align-items: flex-start;
     z-index: 1000; /* Ensure it stays above other elements */
 }
-  
-  .legendItem {
+.legendItem {
     display: flex;
     align-items: flex-start;
-  }
-  
-  .colorBox {
+}
+
+.colorBox {
     display: inline-block;
     width: 17px;
     height: 10px;
     margin-right: 5px;
     vertical-align: text-top;
     border: 1px solid #000;
-  }
-  
-  .legendText {
+}
+
+.legendText {
     font-size: 11px;
     width: calc(100% - 20px); /* Adjust for padding and color box */
     word-wrap: break-word;
     overflow: hidden;
     resize: none;
-  }
+}
+
+/* Media queries for legend adjustments */
+@media (max-width: 768px) {
+    #legendContainer {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        position: fixed;
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+        width: auto;
+        height: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    #legendContainer {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+        width: auto;
+        height: auto;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    #legendContainer {
+        top: auto;
+        bottom: 10px;
+        left: 0;
+        right: 0;
+        width: auto;
+        height: auto;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+    }
+
+    .legendItem {
+        flex-direction: row;
+        margin: 0 10px;
+    }
+
+    .colorBox {
+        width: 15px;
+        height: 8px;
+    }
+
+    .legendText {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 375px) {
+    #legendContainer {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+        width: 140px;
+        height: 160px;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .legendItem {
+        flex-direction: row;
+        margin-bottom: 5px;
+    }
+
+    .colorBox {
+        width: 15px;
+        height: 8px;
+    }
+
+    .legendText {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 666px) and (orientation: landscape) {
+    #legendContainer {
+        top: 400px;
+        position: fixed;
+        bottom: 10px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+        background-color: #ffffff;
+        border-top: 1px solid #ccc;
+    }
+
+    .legendItem {
+        flex-direction: row;
+        margin: 0 10px;
+    }
+
+    .colorBox {
+        width: 15px;
+        height: 8px;
+    }
+
+    .legendText {
+        font-size: 10px;
+    }
+}
 
 svg:active {
     cursor: grabbing;
@@ -170,8 +282,17 @@ svg:active {
 
 @media (max-width: 992px) {
     #mapContainer {
-        width: 95%;
+        width: 105%;
         height: 600px; /* Adjust height for smaller screens */
+    }
+
+    #legendContainer {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        width: 90%;
+        height: auto;
     }
 
     .zoom-controls button {
