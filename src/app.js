@@ -19,6 +19,7 @@ function handleColorButtonClick(event) {
   } else {
     chosenColor = button.dataset.color;
   }
+
 }
 
 document.querySelectorAll(".colorBtn, .stripesBtn").forEach((button) => {
@@ -33,7 +34,7 @@ function addColoringFunctionality() {
     svgElements = svg.querySelectorAll("polygon, path");
     const tribalGroups = {};
     const countyGroups = {};
-
+    
     svgElements.forEach((element) => {
       if (
         !element.classList.contains("tribal") &&
@@ -41,7 +42,7 @@ function addColoringFunctionality() {
       ) {
         return; // Skip elements with no class
       }
-
+      
       if (element.classList.contains("tribal")) {
         element.style.fill = "rgba(153, 153, 153, 0.5)";
         element.style.strokeColor = "#000000";
@@ -60,12 +61,12 @@ function addColoringFunctionality() {
         countyGroups[name].push(element);
       }
       element.dataset.colored = "false"; // Add a flag to track the fill state
-
+      
       function handleElementClick(event) {
         event.preventDefault();
         const name = element.getAttribute("data-name");
         const isColored = element.dataset.colored === "true";
-
+      
         if (element.classList.contains("tribal")) {
           if (isColored) {
             // Reset the fill to the default color
@@ -77,6 +78,9 @@ function addColoringFunctionality() {
                 fillOpacity: 1,
               });
             });
+      
+            // Remove the corresponding legend item
+            removeLegendItem(chosenColor);
           } else {
             // Set the fill to the chosen color
             tribalGroups[name].forEach((tribalElement) => {
@@ -87,6 +91,9 @@ function addColoringFunctionality() {
                 fillOpacity: 0.75,
               });
             });
+      
+            // Add the chosen color to the legend
+            addLegendItem(chosenColor);
           }
         } else if (element.classList.contains("counties")) {
           if (isColored) {
@@ -99,6 +106,9 @@ function addColoringFunctionality() {
                 fillOpacity: 1,
               });
             });
+      
+            // Remove the corresponding legend item
+            removeLegendItem(chosenColor);
           } else {
             // Set the fill to the chosen color
             countyGroups[name].forEach((countyElement) => {
@@ -109,12 +119,15 @@ function addColoringFunctionality() {
                 fillOpacity: 0.75,
               });
             });
+      
+            // Add the chosen color to the legend
+            addLegendItem(chosenColor);
           }
         }
-
+      
         // Toggle the colored state
         element.dataset.colored = !isColored;
-
+      
         // Remove highlight styles on click
         gsap.to(element, {
           duration: 0.15,
@@ -122,6 +135,8 @@ function addColoringFunctionality() {
           strokeWidth: 0.1,
         });
       }
+      
+      
 
       // Add event listeners for element click
       ["touchstart", "pointerdown", "mousedown", "click", "mouseup", "pointerup"].forEach((eventType) => {
@@ -222,25 +237,318 @@ function clearMap() {
 
 document.getElementById("clearBtn").addEventListener("click", clearMap);
 
+
+/////////////////////////////////////////////////////Download Functionality///////////////////////////////////////////////////////
+
 document.getElementById("downloadBtn").addEventListener("click", () => {
   const svg = document.querySelector("#mapContainer svg");
-  const xml = new XMLSerializer().serializeToString(svg);
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  const legendContainer = document.getElementById("legendContainer");
+  
+  // Make sure we have a valid SVG
+  if (!svg) {
+    console.error("SVG not found");
+    return;
+  }
+  
+  // Clone the SVG to avoid modifying the original
+  const clonedSvg = svg.cloneNode(true);
+  
+  // Get original dimensions and viewBox
+  const originalWidth = svg.clientWidth || svg.width.baseVal.value;
+  const originalHeight = svg.clientHeight || svg.height.baseVal.value;
+  
+  // Ensure the cloned SVG has explicit width and height
+  clonedSvg.setAttribute("width", originalWidth);
+  clonedSvg.setAttribute("height", originalHeight);
+  
+  // Make sure the viewBox is set correctly
+  if (!clonedSvg.getAttribute("viewBox")) {
+    const viewBox = svg.getAttribute("viewBox") || `0 0 ${originalWidth} ${originalHeight}`;
+    clonedSvg.setAttribute("viewBox", viewBox);
+  }
+  
+  // Ensure we have defs section with patterns
+  let defs = clonedSvg.querySelector("defs");
+  if (!defs) {
+    defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    clonedSvg.insertBefore(defs, clonedSvg.firstChild);
+  }
+  
+  // Copy the #stripesPattern from the original SVG
+  const originalDefs = svg.querySelector("defs");
+  const stripesPattern = originalDefs.querySelector("#stripesPattern");
+  if (stripesPattern && !defs.querySelector("#stripesPattern")) {
+    defs.appendChild(stripesPattern.cloneNode(true));
+  }
+  
+  // Add the legend
+  // Calculate position based on SVG dimensions
+  const legendX = Math.max(20, originalWidth - 220); // Position from right, with minimum to prevent negative values
+  const legendY = 420;
+  
+  // Create legend group
+  const legendGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  legendGroup.setAttribute("id", "legendGroup");
+  legendGroup.setAttribute("transform", `translate(${legendX}, ${legendY})`);
+  
+  // Add legend background
+  const legendItems = Array.from(legendContainer.children);
+  const legendBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  legendBg.setAttribute("x", "-10");
+  legendBg.setAttribute("y", "-10");
+  legendBg.setAttribute("width", "180");
+  legendBg.setAttribute("height", (legendItems.length * 30) + 20);
+  legendBg.setAttribute("rx", "5"); // Rounded corners
+  legendBg.setAttribute("ry", "5");
+  legendBg.setAttribute("fill", "white");
+  legendBg.setAttribute("fill-opacity", "0.9");
+  legendBg.setAttribute("stroke", "#333");
+  legendBg.setAttribute("stroke-width", "0");
+  legendGroup.appendChild(legendBg);
+  
+  // Add legend title
+  const legendTitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  legendTitle.setAttribute("x", "5");
+  legendTitle.setAttribute("y", "10");
+  legendTitle.setAttribute("font-family", "Arial, sans-serif");
+  legendTitle.setAttribute("font-size", "14px");
+  legendTitle.setAttribute("font-weight", "bold");
+  legendTitle.textContent = "Legend";
+  legendGroup.appendChild(legendTitle);
+  
+  // Add legend items
+  legendItems.forEach((item, index) => {
+    // Get the color from the DOM element - get actual computed style if possible
+    const colorBox = item.querySelector(".colorBox");
+    let colorValue;
+
+        // Try to get the actual computed color from the DOM element
+        if (colorBox) {
+          if (colorBox.style.backgroundImage && colorBox.style.backgroundImage.includes("repeating-linear-gradient")) {
+            colorValue = "url(#stripesPattern)"; // Stripes pattern
+          } else {
+            colorValue = colorBox.style.backgroundColor || colorBox.dataset.actualColor || "#cccccc";
+          }
+        } else {
+          colorValue = colorBox.dataset.actualColor || "#cccccc";
+        }
+
+            // Debug log to check the color value
+    console.log(`Legend item ${index} color value: ${colorValue}`);
+
+    const textField = item.querySelector(".legendText");
+
+
+    // Add color box
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", "5");
+    rect.setAttribute("y", (index * 30) + 20);
+    rect.setAttribute("width", "20");
+    rect.setAttribute("height", "20");
+    rect.setAttribute("stroke", "black");
+    rect.setAttribute("stroke-width", "0.5");
+    
+    // Handle stripes pattern or solid color
+    if (colorValue === "url(#stripesPattern)") {
+      rect.setAttribute("style", "fill: url(#stripesPattern) !important;");
+    } else if (colorValue.startsWith("rgba") || colorValue.startsWith("rgb")) {
+      rect.setAttribute("style", `fill: ${colorValue} !important;`); // Keep rgba/rgb as is
+    } else if (colorValue.startsWith("#") || /^[a-zA-Z]+$/.test(colorValue)) {
+      rect.setAttribute("style", `fill: ${colorValue} !important;`); // Hex or named color
+    } else {
+      rect.setAttribute("style", "fill: gray !important;"); // Default fallback
+    }
+    
+    // Add description text
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", "35");
+    text.setAttribute("y", (index * 30) + 35);
+    text.setAttribute("font-family", "Arial, sans-serif");
+    text.setAttribute("font-size", "12px");
+    
+    // Use the actual textarea value for the text content
+    if (textField && textField.value) {
+      text.textContent = textField.value;
+    } else {
+      // Add a default text if no value is found
+      text.textContent = colorValue === "url(#stripesPattern)" ? "Striped pattern" : colorValue || "Unknown";
+    }
+    
+    legendGroup.appendChild(rect);
+    legendGroup.appendChild(text);
+  });
+  
+  // Add legend to SVG
+  clonedSvg.appendChild(legendGroup);
+  
+  // Convert SVG to a serialized string
+  const xmlSerializer = new XMLSerializer();
+  const svgString = xmlSerializer.serializeToString(clonedSvg);
+  console.log(svgString);
+  
+  // Create a clean SVG with XML declaration
+  const svgBlob = new Blob([
+    '<?xml version="1.0" encoding="UTF-8" standalone="no"?>',
+    svgString
+  ], { type: 'image/svg+xml;charset=utf-8' });
+  
+  const blobUrl = URL.createObjectURL(svgBlob);
+  
+  // First method: Let's try using a two-step approach
+  // Step 1: Draw the image using the reliable Image approach
   const img = new Image();
-
-  canvas.width = svg.clientWidth;
-  canvas.height = svg.clientHeight;
-
-  img.onload = () => {
-    ctx.drawImage(img, 0, 0);
-    const link = document.createElement("a");
-    link.download = "colored_map.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+  img.onload = function() {
+    // Now that image is loaded, create a canvas at the appropriate size
+    const canvas = document.createElement("canvas");
+    // Set reasonable size limits
+    const maxWidth = 2400;
+    const maxHeight = 2400;
+    
+    // Calculate final size while maintaining aspect ratio
+    let finalWidth = originalWidth * 4; // Scale for quality
+    let finalHeight = originalHeight * 4;
+    
+    // Limit to maximum size if needed
+    if (finalWidth > maxWidth) {
+      const scale = maxWidth / finalWidth;
+      finalWidth = maxWidth;
+      finalHeight = finalHeight * scale;
+    }
+    if (finalHeight > maxHeight) {
+      const scale = maxHeight / finalHeight;
+      finalHeight = maxHeight;
+      finalWidth = finalWidth * scale;
+    }
+    
+    canvas.width = finalWidth;
+    canvas.height = finalHeight;
+    
+    const ctx = canvas.getContext("2d");
+    
+    // Clear canvas with white background
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw the SVG image onto the canvas
+    ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
+    
+    // Log a simple message to console to confirm we reached this point
+    console.log("Image drawn to canvas");
+    
+    // Create download link
+    try {
+      const imageUrl = canvas.toDataURL("image/png");
+      
+      const downloadLink = document.createElement("a");
+      downloadLink.href = imageUrl;
+      downloadLink.download = "map_with_legend.png";
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      
+      // Clean up
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error creating download:", error);
+      alert("There was an error creating the download. Please try again.");
+    }
   };
+  
+  // Handle potential errors
+  img.onerror = function(e) {
+    console.error("Error loading SVG image:", e);
+    alert("There was an error processing the map. Please try again.");
+    URL.revokeObjectURL(blobUrl);
+  };
+  
+  // Set the source
+  img.src = blobUrl;
 
-  img.src = "data:image/svg+xml;base64," + btoa(xml);
+  // Add a debug console.log to check the legend data
+  console.log("Legend items being processed:", legendItems.length);
+  legendItems.forEach((item, i) => {
+    const textField = item.querySelector(".legendText");
+    console.log(`Legend item ${i} color: ${item.dataset.color}, text: ${textField ? textField.value : 'no text'}`);
+  });
+});
+///////////////////////////////////////////////End of Download Functionality///////////////////////////////////////////////////////
+
+
+function addLegendItem(color) {
+  const legendContainer = document.getElementById("legendContainer");
+
+  // Check if the color already exists in the legend
+  const existingItem = Array.from(legendContainer.children).find(
+    (item) => item.dataset.color === color
+  );
+  if (existingItem) return;
+
+  // Create a new legend item
+  const legendItem = document.createElement("div");
+  legendItem.classList.add("legendItem");
+  legendItem.dataset.color = color;
+
+  // Create the color box
+  const colorBox = document.createElement("div");
+  colorBox.classList.add("colorBox");
+
+  // Handle stripes pattern
+  if (color === "url(#stripesPattern)") {
+    colorBox.style.backgroundImage = "repeating-linear-gradient(-45deg, #97c350, #97c350 8px, #2074b0 8px, #2074b0 25px)";
+    colorBox.style.backgroundSize = "100% 100%";
+  } else {
+    colorBox.style.backgroundColor = color;
+    // Also store the actual color value for later retrieval
+    colorBox.dataset.actualColor = color;
+  }
+
+  // Create the text field
+  const textField = document.createElement("textarea");
+  textField.classList.add("legendText");
+  textField.maxLength = 256;
+  textField.placeholder = "Enter description...";
+  textField.style.border = "none";
+  textField.style.lineHeight = "1.2em";
+
+  // Add event listener to ensure changes are stored
+  textField.addEventListener("input", function() {
+    // This ensures the text field's value is saved even if the user doesn't click away
+    this.setAttribute("data-value", this.value);
+  });
+
+  // Append the color box and text field to the legend item
+  legendItem.appendChild(colorBox);
+  legendItem.appendChild(textField);
+
+  // Append the legend item to the legend container
+  legendContainer.appendChild(legendItem);
+
+    // Log to confirm the legend item was created with the right color
+    console.log(`Legend item added with color: ${color}`);
+}
+
+function removeLegendItem(color) {
+  const legendContainer = document.getElementById("legendContainer");
+
+  // Find the legend item with the matching color
+  const legendItem = Array.from(legendContainer.children).find(
+    (item) => item.dataset.color === color
+  );
+
+  // Remove the legend item if it exists
+  if (legendItem) {
+    legendContainer.removeChild(legendItem);
+    console.log(`Legend item removed with color: ${color}`);
+  }
+}
+
+window.addEventListener("resize", () => {
+  const mapContainer = document.getElementById("mapContainer");
+  const legendContainer = document.getElementById("legendContainer");
+
+  // Dynamically adjust the legend's height to match the map
+  const mapHeight = mapContainer.offsetHeight;
+  legendContainer.style.height = `${mapHeight}px`;
 });
 
 async function fetchMapData() {
@@ -705,4 +1013,3 @@ function updateLabels(layer) {
     });
   }
 }
-
