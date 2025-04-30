@@ -71,7 +71,7 @@ body {
 
 #legendContainer {
     position: fixed; /* Fix the legend in the viewport */
-    top: 480px; /* Adjust the vertical position as needed */
+    top: 280px; /* Adjust the vertical position as needed */
     left: calc(100% - 220px); /* Position it near the right edge of the viewport */
     width: auto;
     height: auto;
@@ -293,6 +293,7 @@ svg:active {
         align-items: flex-start;
         width: 90%;
         height: auto;
+        top: auto;
     }
 
     .zoom-controls button {
