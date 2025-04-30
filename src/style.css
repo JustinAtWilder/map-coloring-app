@@ -14,7 +14,6 @@ body {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    width: 100%;
 }
 
 .canvas {
@@ -22,7 +21,7 @@ body {
     justify-content: center;
     align-items: center;
     overflow: visible;
-    width: 100%; /* Adjust width as needed */
+    width: 90%; /* Adjust width as needed */
     position: relative;
 }
 
@@ -62,9 +61,8 @@ body {
 }
 
 #mapContainer {
-    position: relative;
-    margin-right: 220px; /* Leave space for the legend */
-    width: calc(100% - 220px); /* Adjust the map width to account for the legend */
+    position: relative; /* Leave space for the legend */
+    width: calc(100%); /* Adjust the map width to account for the legend */
     height: 800px; /* Adjust the height as needed */
     display: flex;
     justify-content: center;
@@ -80,6 +78,7 @@ body {
     border: 0.5px solid #ccc;
     background-color: #ffffff;
     overflow-y: auto;
+    margin-left: 10px; /* Add some space from the left edge */
     padding: 2px;
     display: flex;
     flex-direction: column;
