@@ -243,54 +243,55 @@ document.getElementById("clearBtn").addEventListener("click", clearMap);
 document.getElementById("downloadBtn").addEventListener("click", () => {
   const svg = document.querySelector("#mapContainer svg");
   const legendContainer = document.getElementById("legendContainer");
-  
+
   // Make sure we have a valid SVG
   if (!svg) {
     console.error("SVG not found");
     return;
   }
-  
+
   // Clone the SVG to avoid modifying the original
   const clonedSvg = svg.cloneNode(true);
-  
+
   // Get original dimensions and viewBox
   const originalWidth = svg.clientWidth || svg.width.baseVal.value;
   const originalHeight = svg.clientHeight || svg.height.baseVal.value;
-  
+
+  // Set scaling factor for higher resolution
+  const scaleFactor = 6; // Increase this value for higher resolution
+
   // Ensure the cloned SVG has explicit width and height
-  clonedSvg.setAttribute("width", originalWidth);
-  clonedSvg.setAttribute("height", originalHeight);
-  
+  clonedSvg.setAttribute("width", originalWidth * scaleFactor);
+  clonedSvg.setAttribute("height", originalHeight * scaleFactor);
+
   // Make sure the viewBox is set correctly
   if (!clonedSvg.getAttribute("viewBox")) {
     const viewBox = svg.getAttribute("viewBox") || `0 0 ${originalWidth} ${originalHeight}`;
     clonedSvg.setAttribute("viewBox", viewBox);
   }
-  
+
   // Ensure we have defs section with patterns
   let defs = clonedSvg.querySelector("defs");
   if (!defs) {
     defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     clonedSvg.insertBefore(defs, clonedSvg.firstChild);
   }
-  
+
   // Copy the #stripesPattern from the original SVG
   const originalDefs = svg.querySelector("defs");
   const stripesPattern = originalDefs.querySelector("#stripesPattern");
   if (stripesPattern && !defs.querySelector("#stripesPattern")) {
     defs.appendChild(stripesPattern.cloneNode(true));
   }
-  
+
   // Add the legend
-  // Calculate position based on SVG dimensions
   const legendX = Math.max(20, originalWidth - 220); // Position from right, with minimum to prevent negative values
   const legendY = 420;
-  
-  // Create legend group
+
   const legendGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
   legendGroup.setAttribute("id", "legendGroup");
   legendGroup.setAttribute("transform", `translate(${legendX}, ${legendY})`);
-  
+
   // Add legend background
   const legendItems = Array.from(legendContainer.children);
   const legendBg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -305,7 +306,7 @@ document.getElementById("downloadBtn").addEventListener("click", () => {
   legendBg.setAttribute("stroke", "#333");
   legendBg.setAttribute("stroke-width", "0");
   legendGroup.appendChild(legendBg);
-  
+
   // Add legend title
   const legendTitle = document.createElementNS("http://www.w3.org/2000/svg", "text");
   legendTitle.setAttribute("x", "5");
@@ -315,29 +316,27 @@ document.getElementById("downloadBtn").addEventListener("click", () => {
   legendTitle.setAttribute("font-weight", "bold");
   legendTitle.textContent = "Legend";
   legendGroup.appendChild(legendTitle);
-  
+
   // Add legend items
   legendItems.forEach((item, index) => {
-    // Get the color from the DOM element - get actual computed style if possible
     const colorBox = item.querySelector(".colorBox");
     let colorValue;
 
-        // Try to get the actual computed color from the DOM element
-        if (colorBox) {
-          if (colorBox.style.backgroundImage && colorBox.style.backgroundImage.includes("repeating-linear-gradient")) {
-            colorValue = "url(#stripesPattern)"; // Stripes pattern
-          } else {
-            colorValue = colorBox.style.backgroundColor || colorBox.dataset.actualColor || "#cccccc";
-          }
-        } else {
-          colorValue = colorBox.dataset.actualColor || "#cccccc";
-        }
+    // Try to get the actual computed color from the DOM element
+    if (colorBox) {
+      if (colorBox.style.backgroundImage && colorBox.style.backgroundImage.includes("repeating-linear-gradient")) {
+        colorValue = "url(#stripesPattern)"; // Stripes pattern
+      } else {
+        colorValue = colorBox.style.backgroundColor || colorBox.dataset.actualColor || "#cccccc";
+      }
+    } else {
+      colorValue = colorBox.dataset.actualColor || "#cccccc";
+    }
 
-            // Debug log to check the color value
+    // Debug log to check the color value
     console.log(`Legend item ${index} color value: ${colorValue}`);
 
     const textField = item.querySelector(".legendText");
-
 
     // Add color box
     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -347,7 +346,7 @@ document.getElementById("downloadBtn").addEventListener("click", () => {
     rect.setAttribute("height", "20");
     rect.setAttribute("stroke", "black");
     rect.setAttribute("stroke-width", "0.5");
-    
+
     // Handle stripes pattern or solid color
     if (colorValue === "url(#stripesPattern)") {
       rect.setAttribute("style", "fill: url(#stripesPattern) !important;");
@@ -358,94 +357,64 @@ document.getElementById("downloadBtn").addEventListener("click", () => {
     } else {
       rect.setAttribute("style", "fill: gray !important;"); // Default fallback
     }
-    
+
     // Add description text
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.setAttribute("x", "35");
     text.setAttribute("y", (index * 30) + 35);
     text.setAttribute("font-family", "Arial, sans-serif");
     text.setAttribute("font-size", "12px");
-    
+
     // Use the actual textarea value for the text content
     if (textField && textField.value) {
       text.textContent = textField.value;
     } else {
-      // Add a default text if no value is found
       text.textContent = colorValue === "url(#stripesPattern)" ? "Striped pattern" : colorValue || "Unknown";
     }
-    
+
     legendGroup.appendChild(rect);
     legendGroup.appendChild(text);
   });
-  
+
   // Add legend to SVG
   clonedSvg.appendChild(legendGroup);
-  
-  // Convert SVG to a serialized string
+
+  // Serialize the SVG and create a Blob
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(clonedSvg);
-  console.log(svgString);
-  
-  // Create a clean SVG with XML declaration
-  const svgBlob = new Blob([
-    '<?xml version="1.0" encoding="UTF-8" standalone="no"?>',
-    svgString
-  ], { type: 'image/svg+xml;charset=utf-8' });
-  
+  const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
   const blobUrl = URL.createObjectURL(svgBlob);
-  
-  // First method: Let's try using a two-step approach
-  // Step 1: Draw the image using the reliable Image approach
+
+  // Create an image element to render the SVG
   const img = new Image();
-  img.onload = function() {
-    // Now that image is loaded, create a canvas at the appropriate size
+  img.onload = function () {
+    // Create a canvas with scaled dimensions
     const canvas = document.createElement("canvas");
-    // Set reasonable size limits
-    const maxWidth = 2400;
-    const maxHeight = 2400;
-    
-    // Calculate final size while maintaining aspect ratio
-    let finalWidth = originalWidth * 4; // Scale for quality
-    let finalHeight = originalHeight * 4;
-    
-    // Limit to maximum size if needed
-    if (finalWidth > maxWidth) {
-      const scale = maxWidth / finalWidth;
-      finalWidth = maxWidth;
-      finalHeight = finalHeight * scale;
-    }
-    if (finalHeight > maxHeight) {
-      const scale = maxHeight / finalHeight;
-      finalHeight = maxHeight;
-      finalWidth = finalWidth * scale;
-    }
-    
-    canvas.width = finalWidth;
-    canvas.height = finalHeight;
-    
+    canvas.width = originalWidth * scaleFactor;
+    canvas.height = originalHeight * scaleFactor;
     const ctx = canvas.getContext("2d");
-    
+
+    // Scale the rendering context
+    ctx.scale(scaleFactor, scaleFactor);
+
     // Clear canvas with white background
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Draw the SVG image onto the canvas
-    ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
-    
-    // Log a simple message to console to confirm we reached this point
-    console.log("Image drawn to canvas");
-    
+    ctx.drawImage(img, 0, 0, originalWidth, originalHeight);
+
     // Create download link
     try {
       const imageUrl = canvas.toDataURL("image/png");
-      
+
       const downloadLink = document.createElement("a");
       downloadLink.href = imageUrl;
       downloadLink.download = "map_with_legend.png";
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
-      
+
       // Clean up
       URL.revokeObjectURL(blobUrl);
     } catch (error) {
@@ -453,24 +422,18 @@ document.getElementById("downloadBtn").addEventListener("click", () => {
       alert("There was an error creating the download. Please try again.");
     }
   };
-  
+
   // Handle potential errors
-  img.onerror = function(e) {
+  img.onerror = function (e) {
     console.error("Error loading SVG image:", e);
     alert("There was an error processing the map. Please try again.");
     URL.revokeObjectURL(blobUrl);
   };
-  
-  // Set the source
-  img.src = blobUrl;
 
-  // Add a debug console.log to check the legend data
-  console.log("Legend items being processed:", legendItems.length);
-  legendItems.forEach((item, i) => {
-    const textField = item.querySelector(".legendText");
-    console.log(`Legend item ${i} color: ${item.dataset.color}, text: ${textField ? textField.value : 'no text'}`);
-  });
+  // Set the source of the image to the Blob URL
+  img.src = blobUrl;
 });
+
 ///////////////////////////////////////////////End of Download Functionality///////////////////////////////////////////////////////
 
 
